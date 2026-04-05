@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "HwtC0IRW3VJ04gZc8FcWC"
+uri = "file://DEPLOY.md"
+type = "text"
+title = "AI 代理转发服务 — 全新工作区部署指南"
