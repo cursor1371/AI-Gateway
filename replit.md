@@ -19,27 +19,34 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ## AI Proxy
 
-The API server (`artifacts/api-server`) includes an AI proxy layer at `src/routes/proxy.ts` that transparently forwards requests to the Replit AI modelfarm backend.
+The API server (`artifacts/api-server`) includes an AI proxy layer at `src/routes/proxy.ts` that transparently forwards requests to the Replit AI modelfarm backend. Proxy routes use native provider API formats and are protected by `GATEWAY_API_KEY`. The proxy router is mounted at root (`/`) in `app.ts`; registered production paths are `/v1`, `/v1beta`, `/openrouter`.
 
 ### Path Mappings
 
-| External path | Forwarded to |
-|---|---|
-| `POST /v1/chat/completions` | `localhost:1106/modelfarm/openai/chat/completions` |
-| `POST /v1/responses` | `localhost:1106/modelfarm/openai/responses` |
-| `POST /v1/messages` | `localhost:1106/modelfarm/anthropic/v1/messages` |
-| `POST /v1beta/models/{model}:generateContent` | `localhost:1106/modelfarm/gemini/models/{model}:generateContent` |
-| `POST /v1beta/models/{model}:streamGenerateContent` | `localhost:1106/modelfarm/gemini/models/{model}:streamGenerateContent` |
-
-### Authentication Header Replacement
-
-External auth headers are stripped and replaced with the built-in AI integration key:
-
-| Provider | External header | Replaced with |
+| Provider | External path | Internal (modelfarm) |
 |---|---|---|
-| OpenAI | `Authorization: Bearer xxx` | Built-in `AI_INTEGRATIONS_OPENAI_API_KEY` |
-| Anthropic | `x-api-key: xxx` | Built-in `AI_INTEGRATIONS_ANTHROPIC_API_KEY` |
-| Gemini | `x-goog-api-key: xxx` | Built-in `AI_INTEGRATIONS_GEMINI_API_KEY` |
+| OpenAI | `POST /v1/chat/completions` | `/modelfarm/openai/chat/completions` |
+| OpenAI | `POST /v1/responses` | `/modelfarm/openai/responses` |
+| Anthropic | `POST /v1/messages` | `/modelfarm/anthropic/v1/messages` |
+| Gemini | `POST /v1beta/models/{model}:generateContent` | `/modelfarm/gemini/models/{model}:generateContent` |
+| Gemini | `POST /v1beta/models/{model}:streamGenerateContent` | `/modelfarm/gemini/models/{model}:streamGenerateContent` |
+| OpenRouter | `POST /openrouter/v1/chat/completions` | `/modelfarm/openrouter/chat/completions` |
+
+### Authentication
+
+Gateway clients must send `GATEWAY_API_KEY` in any of:
+- `Authorization: Bearer <key>`
+- `x-api-key: <key>`
+- `x-goog-api-key: <key>`
+
+Provider credentials are injected server-side:
+
+| Provider | Injected header | Env var |
+|---|---|---|
+| OpenAI | `Authorization: Bearer xxx` | `AI_INTEGRATIONS_OPENAI_API_KEY` |
+| Anthropic | `x-api-key: xxx` | `AI_INTEGRATIONS_ANTHROPIC_API_KEY` |
+| Gemini | `x-goog-api-key: xxx` | `AI_INTEGRATIONS_GEMINI_API_KEY` |
+| OpenRouter | `Authorization: Bearer xxx` | `AI_INTEGRATIONS_OPENROUTER_API_KEY` |
 
 All request/response bodies are transparently passed through. Streaming (SSE) is fully supported for all providers.
 

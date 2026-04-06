@@ -8,7 +8,7 @@ id = "artifacts/mockup-sandbox"
 
 [deployment]
 router = "application"
-deploymentTarget = "autoscale"
+deploymentTarget = "gce"
 run = ["sh", "-c", "PORT=8080 node --enable-source-maps artifacts/api-server/dist/index.mjs"]
 
 [deployment.postBuild]
@@ -28,4 +28,4 @@ timeoutMs = 20000
 [userenv]
 
 [userenv.shared]
-GATEWAY_API_KEY = "gw-c8def1bd5a5af77de4742cc8871e2e7de730d6c47daeb8e5fefe36eea783fc1a"
+GATEWAY_API_KEY = "gw-38642f17a79a5921f89296adb0de016e04e62c071d79599a60d095f378cd6c24"

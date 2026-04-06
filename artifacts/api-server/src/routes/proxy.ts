@@ -3,7 +3,9 @@ import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
-function getProviderConfig(provider: "openai" | "anthropic" | "gemini"): {
+type Provider = "openai" | "anthropic" | "gemini" | "openrouter";
+
+function getProviderConfig(provider: Provider): {
   baseUrl: string;
   apiKey: string;
 } {
@@ -111,6 +113,7 @@ function getQueryString(req: Request): string {
   return idx >= 0 ? req.url.slice(idx) : "";
 }
 
+// ── OpenAI ──────────────────────────────────────────────────────────────────
 router.all("/v1/chat/completions", async (req: Request, res: Response) => {
   const { baseUrl, apiKey } = getProviderConfig("openai");
   const targetUrl = `${baseUrl}/chat/completions${getQueryString(req)}`;
@@ -123,12 +126,14 @@ router.all("/v1/responses", async (req: Request, res: Response) => {
   await proxyRequest(req, res, targetUrl, "Authorization", `Bearer ${apiKey}`);
 });
 
+// ── Anthropic ────────────────────────────────────────────────────────────────
 router.all("/v1/messages", async (req: Request, res: Response) => {
   const { baseUrl, apiKey } = getProviderConfig("anthropic");
   const targetUrl = `${baseUrl}/v1/messages${getQueryString(req)}`;
   await proxyRequest(req, res, targetUrl, "x-api-key", apiKey);
 });
 
+// ── Gemini ───────────────────────────────────────────────────────────────────
 router.all(
   /^\/v1beta\/models\/[^/]+:(generateContent|streamGenerateContent)$/,
   async (req: Request, res: Response) => {
@@ -138,5 +143,13 @@ router.all(
     await proxyRequest(req, res, targetUrl, "x-goog-api-key", apiKey);
   },
 );
+
+// ── OpenRouter ───────────────────────────────────────────────────────────────
+// Uses /openrouter/v1/chat/completions to avoid conflicting with OpenAI's /v1/chat/completions
+router.all("/openrouter/v1/chat/completions", async (req: Request, res: Response) => {
+  const { baseUrl, apiKey } = getProviderConfig("openrouter");
+  const targetUrl = `${baseUrl}/chat/completions${getQueryString(req)}`;
+  await proxyRequest(req, res, targetUrl, "Authorization", `Bearer ${apiKey}`);
+});
 
 export default router;

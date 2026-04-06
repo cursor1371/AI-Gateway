@@ -2,7 +2,7 @@
 
 ## 概览
 
-本项目是基于 Replit 的 AI 透明代理网关，支持 OpenAI、Anthropic、Gemini 三个供应商的完整 API 转发（含流式 SSE）。
+本项目是基于 Replit 的 AI 透明代理网关，支持 OpenAI、Anthropic、Gemini、OpenRouter 四个供应商的完整 API 转发（含流式 SSE）。
 
 ---
 
@@ -25,10 +25,15 @@
 ```
 请完成以下 AI 网关初始化，按顺序执行：
 
-1. 依次调用 setupReplitAIIntegrations 激活三个 AI 集成：
-   - OpenAI: providerSlug="openai", providerUrlEnvVarName="AI_INTEGRATIONS_OPENAI_BASE_URL", providerApiKeyEnvVarName="AI_INTEGRATIONS_OPENAI_API_KEY"
-   - Anthropic: providerSlug="anthropic", providerUrlEnvVarName="AI_INTEGRATIONS_ANTHROPIC_BASE_URL", providerApiKeyEnvVarName="AI_INTEGRATIONS_ANTHROPIC_API_KEY"
-   - Gemini: providerSlug="gemini", providerUrlEnvVarName="AI_INTEGRATIONS_GEMINI_BASE_URL", providerApiKeyEnvVarName="AI_INTEGRATIONS_GEMINI_API_KEY"
+1. 依次调用 setupReplitAIIntegrations 激活四个 AI 集成：
+
+OpenAI: providerSlug="openai", providerUrlEnvVarName="AI_INTEGRATIONS_OPENAI_BASE_URL", providerApiKeyEnvVarName="AI_INTEGRATIONS_OPENAI_API_KEY"
+
+Anthropic: providerSlug="anthropic", providerUrlEnvVarName="AI_INTEGRATIONS_ANTHROPIC_BASE_URL", providerApiKeyEnvVarName="AI_INTEGRATIONS_ANTHROPIC_API_KEY"
+
+Gemini: providerSlug="gemini", providerUrlEnvVarName="AI_INTEGRATIONS_GEMINI_BASE_URL", providerApiKeyEnvVarName="AI_INTEGRATIONS_GEMINI_API_KEY"
+
+OpenRouter: providerSlug="openrouter", providerUrlEnvVarName="AI_INTEGRATIONS_OPENROUTER_BASE_URL", providerApiKeyEnvVarName="AI_INTEGRATIONS_OPENROUTER_API_KEY"
 
 2. 生成一个随机 API Key 并保存为环境变量：
    - 使用 crypto.randomBytes(32).toString("hex") 生成，前缀加 "gw-"
@@ -72,6 +77,12 @@ curl -X POST "https://YOUR_DOMAIN/v1beta/models/gemini-2.0-flash:generateContent
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_GATEWAY_API_KEY" \
   -d '{"contents":[{"role":"user","parts":[{"text":"Hello"}]}]}'
+
+# OpenRouter 测试
+curl -X POST https://YOUR_DOMAIN/openrouter/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_GATEWAY_API_KEY" \
+  -d '{"model":"openai/gpt-4o-mini","messages":[{"role":"user","content":"Hello"}],"max_tokens":10}'
 ```
 
 ---
@@ -86,6 +97,7 @@ curl -X POST "https://YOUR_DOMAIN/v1beta/models/gemini-2.0-flash:generateContent
 | `POST /v1/messages` | Anthropic 消息 | 需要 Key |
 | `POST /v1beta/models/{model}:generateContent` | Gemini 生成 | 需要 Key |
 | `POST /v1beta/models/{model}:streamGenerateContent` | Gemini 流式生成 | 需要 Key |
+| `POST /openrouter/v1/chat/completions` | OpenRouter 聊天 | 需要 Key |
 
 所有 AI 端点需在请求头携带：
 ```
@@ -115,6 +127,7 @@ PORT=8080 node --enable-source-maps artifacts/api-server/dist/index.mjs
 | `POST /v1/messages` | `modelfarm/anthropic/v1/messages` |
 | `POST /v1beta/models/{m}:generateContent` | `modelfarm/gemini/models/{m}:generateContent` |
 | `POST /v1beta/models/{m}:streamGenerateContent` | `modelfarm/gemini/models/{m}:streamGenerateContent` |
+| `POST /openrouter/v1/chat/completions` | `modelfarm/openrouter/chat/completions` |
 
 外部客户端的 API Key 会被自动替换为 Replit 内置密钥，无需真实 Key。
 
